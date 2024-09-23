@@ -8,11 +8,12 @@ from langchain.chains import RetrievalQA
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.chat_models import BedrockChat
 from langchain_community.vectorstores import Chroma
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
 from litellm import completion
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+
 
 def setup_knowledge_base(
     product_catalog: str = None, model_name: str = "gpt-3.5-turbo"
@@ -27,9 +28,15 @@ def setup_knowledge_base(
     text_splitter = CharacterTextSplitter(chunk_size=5000, chunk_overlap=200)
     texts = text_splitter.split_text(product_catalog)
 
-    llm = ChatOpenAI(model_name="gpt-4-0125-preview", temperature=0)
+    llm = AzureChatOpenAI(
+        azure_deployment="gpt4o", temperature=0, openai_api_version="2023-03-15-preview"
+    )
 
-    embeddings = OpenAIEmbeddings()
+    embeddings = AzureOpenAIEmbeddings(
+        openai_api_version="2023-05-15",
+        model="ada-002",
+        deployment="ada-002",
+    )
     docsearch = Chroma.from_texts(
         texts, embeddings, collection_name="product-knowledge-base"
     )
@@ -150,6 +157,7 @@ def generate_stripe_payment_link(query: str) -> str:
     )
     return response.text
 
+
 def get_mail_body_subject_from_query(query):
     prompt = f"""
     Given the query: "{query}", analyze the content and extract the necessary information to send an email. The information needed includes the recipient's email address, the subject of the email, and the body content of the email. 
@@ -186,8 +194,9 @@ def get_mail_body_subject_from_query(query):
     print(mail_body_subject)
     return mail_body_subject
 
+
 def send_email_with_gmail(email_details):
-    '''.env should include GMAIL_MAIL and GMAIL_APP_PASSWORD to work correctly'''
+    """.env should include GMAIL_MAIL and GMAIL_APP_PASSWORD to work correctly"""
     try:
         sender_email = os.getenv("GMAIL_MAIL")
         app_password = os.getenv("GMAIL_APP_PASSWORD")
@@ -196,13 +205,13 @@ def send_email_with_gmail(email_details):
         body = email_details["body"]
         # Create MIME message
         msg = MIMEMultipart()
-        msg['From'] = sender_email
-        msg['To'] = recipient_email
-        msg['Subject'] = subject
-        msg.attach(MIMEText(body, 'plain'))
+        msg["From"] = sender_email
+        msg["To"] = recipient_email
+        msg["Subject"] = subject
+        msg.attach(MIMEText(body, "plain"))
 
         # Create server object with SSL option
-        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+        server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
         server.login(sender_email, app_password)
         text = msg.as_string()
         server.sendmail(sender_email, recipient_email, text)
@@ -211,8 +220,9 @@ def send_email_with_gmail(email_details):
     except Exception as e:
         return f"Email was not sent successfully, error: {e}"
 
+
 def send_email_tool(query):
-    '''Sends an email based on the single query string'''
+    """Sends an email based on the single query string"""
     email_details = get_mail_body_subject_from_query(query)
     if isinstance(email_details, str):
         email_details = json.loads(email_details)  # Ensure it's a dictionary
@@ -223,27 +233,24 @@ def send_email_tool(query):
 
 
 def generate_calendly_invitation_link(query):
-    '''Generate a calendly invitation link based on the single query string'''
+    """Generate a calendly invitation link based on the single query string"""
     event_type_uuid = os.getenv("CALENDLY_EVENT_UUID")
-    api_key = os.getenv('CALENDLY_API_KEY')
-    headers = {
-        'Authorization': f'Bearer {api_key}',
-        'Content-Type': 'application/json'
-    }
-    url = 'https://api.calendly.com/scheduling_links'
+    api_key = os.getenv("CALENDLY_API_KEY")
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    url = "https://api.calendly.com/scheduling_links"
     payload = {
-    "max_event_count": 1,
-    "owner": f"https://api.calendly.com/event_types/{event_type_uuid}",
-    "owner_type": "EventType"
+        "max_event_count": 1,
+        "owner": f"https://api.calendly.com/event_types/{event_type_uuid}",
+        "owner_type": "EventType",
     }
-    
-    
+
     response = requests.post(url, json=payload, headers=headers)
     if response.status_code == 201:
         data = response.json()
         return f"url: {data['resource']['booking_url']}"
     else:
         return "Failed to create Calendly link: "
+
 
 def get_tools(product_catalog):
     # query to get_tools can be used to be embedded and relevant tools found
@@ -257,22 +264,22 @@ def get_tools(product_catalog):
             func=knowledge_base.run,
             description="useful for when you need to answer questions about product information or services offered, availability and their costs.",
         ),
-        Tool(
-            name="GeneratePaymentLink",
-            func=generate_stripe_payment_link,
-            description="useful to close a transaction with a customer. You need to include product name and quantity and customer name in the query input.",
-        ),
-        Tool(
-            name="SendEmail",
-            func=send_email_tool,
-            description="Sends an email based on the query input. The query should specify the recipient, subject, and body of the email.",
-        ),
-        Tool(
-            name="SendCalendlyInvitation",
-            func=generate_calendly_invitation_link,
-            description='''Useful for when you need to create invite for a personal meeting in Sleep Heaven shop. 
-            Sends a calendly invitation based on the query input.''',
-        )
+        # Tool(
+        #     name="GeneratePaymentLink",
+        #     func=generate_stripe_payment_link,
+        #     description="useful to close a transaction with a customer. You need to include product name and quantity and customer name in the query input.",
+        # ),
+        # Tool(
+        #     name="SendEmail",
+        #     func=send_email_tool,
+        #     description="Sends an email based on the query input. The query should specify the recipient, subject, and body of the email.",
+        # ),
+        # Tool(
+        #     name="SendCalendlyInvitation",
+        #     func=generate_calendly_invitation_link,
+        #     description="""Useful for when you need to create invite for a personal meeting in Sleep Heaven shop.
+        #     Sends a calendly invitation based on the query input.""",
+        # ),
     ]
 
     return tools

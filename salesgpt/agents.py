@@ -276,7 +276,6 @@ class SalesGPT(Chain):
 
     @time_logger
     async def acall(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
-    
         """
         Executes one step of the sales agent.
 
@@ -638,7 +637,7 @@ class SalesGPT(Chain):
             sales_conversation_utterance_chain=sales_conversation_utterance_chain,
             sales_agent_executor=sales_agent_executor,
             knowledge_base=knowledge_base,
-            model_name=llm.model,
+            # model_name=llm.model,
             verbose=verbose,
             use_tools=use_tools,
             **kwargs,

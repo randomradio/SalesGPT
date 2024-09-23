@@ -10,16 +10,25 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from salesgpt.salesgptapi import SalesGPTAPI
+import litellm
+
+litellm.set_verbose = True
 
 # Load environment variables
 load_dotenv()
 
 # Access environment variables
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
-CORS_ORIGINS = ["http://localhost:3000", 
-                "http://react-frontend:80",
-                "https://sales-gpt-frontend-git-main-filip-odysseypartns-projects.vercel.app",
-                "https://sales-gpt-frontend.vercel.app"]
+AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY", "")
+AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT", "")
+AZURE_OPENAI_DEPLOYMENT = os.getenv("AZURE_OPENAI_DEPLOYMENT", "")
+OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION", "")
+CORS_ORIGINS = [
+    "http://localhost:3000",
+    "http://react-frontend:80",
+    "https://sales-gpt-frontend-git-main-filip-odysseypartns-projects.vercel.app",
+    "https://sales-gpt-frontend.vercel.app",
+]
 CORS_METHODS = ["GET", "POST"]
 
 # Initialize FastAPI app
@@ -34,8 +43,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 class AuthenticatedResponse(BaseModel):
     message: str
+
 
 def get_auth_key(authorization: str = Header(...)) -> None:
     auth_key = os.getenv("AUTH_KEY")
@@ -44,6 +55,7 @@ def get_auth_key(authorization: str = Header(...)) -> None:
     expected_header = f"Bearer {auth_key}"
     if authorization != expected_header:
         raise HTTPException(status_code=401, detail="Unauthorized")
+
 
 @app.get("/")
 async def say_hello():
@@ -63,7 +75,7 @@ async def get_bot_name(authorization: Optional[str] = Header(None)):
     load_dotenv()
     if os.getenv("ENVIRONMENT") == "production":
         get_auth_key(authorization)
-        
+
     sales_api = SalesGPTAPI(
         config_path=os.getenv("CONFIG_PATH", "examples/example_agent_setup.json"),
         product_catalog=os.getenv(
@@ -77,7 +89,11 @@ async def get_bot_name(authorization: Optional[str] = Header(None)):
 
 
 @app.post("/chat")
-async def chat_with_sales_agent(req: MessageList, stream: bool = Query(False), authorization: Optional[str] = Header(None)):
+async def chat_with_sales_agent(
+    req: MessageList,
+    stream: bool = Query(False),
+    authorization: Optional[str] = Header(None),
+):
     """
     Handles chat interactions with the sales agent.
 
