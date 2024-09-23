@@ -6,7 +6,7 @@ WORKDIR /app
 
 COPY requirements.txt .
 
-RUN pip install -r requirements.txt
+RUN pip install -r requirements.txt --default-timeout=100000 -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 # Make port 8000 available to the world outside this container
 EXPOSE 8000
