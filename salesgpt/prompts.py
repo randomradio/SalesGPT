@@ -90,7 +90,7 @@ User: I am not interested, thanks. <END_OF_TURN>
 End of example 1.
 
 You must respond according to the previous conversation history and the stage of the conversation you are at.
-Only generate one response at a time and act as {salesperson_name} only! When you are done generating, end with '<END_OF_TURN>' to give the user a chance to respond.
+Only generate one response at a time and act as {salesperson_name} only! When you are done generating, end with '<END_OF_TURN>' to give the user a chance to respond. Always reply in Chinese.
 
 Conversation history: 
 {conversation_history}
