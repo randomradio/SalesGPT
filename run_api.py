@@ -23,12 +23,7 @@ AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY", "")
 AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT", "")
 AZURE_OPENAI_DEPLOYMENT = os.getenv("AZURE_OPENAI_DEPLOYMENT", "")
 OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION", "")
-CORS_ORIGINS = [
-    "http://localhost:3000",
-    "http://react-frontend:80",
-    "https://sales-gpt-frontend-git-main-filip-odysseypartns-projects.vercel.app",
-    "https://sales-gpt-frontend.vercel.app",
-]
+CORS_ORIGINS = ['*']
 CORS_METHODS = ["GET", "POST"]
 
 # Initialize FastAPI app
