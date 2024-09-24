@@ -1,7 +1,5 @@
-// src/pages/chat.tsx
-import React from 'react';
-import { ChatInterface } from '../components/chat-interface';
-import { GitHubFooter } from '../components/git-hub-footer';
+import { ChatInterface } from './chat-interface';
+import { GitHubFooter } from './git-hub-footer';
 
 export default function ChatPage() {
     return (
@@ -12,7 +10,7 @@ export default function ChatPage() {
                 <ChatInterface />
             </div>
             {/* Footer will automatically be pushed to the bottom */}
-            <GitHubFooter />
+            {/* <GitHubFooter /> */}
         </div>
     );
 }

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid'; // For generating unique session_id
-import { Input } from "@/components/ui/input";
-import BotIcon from '@/components/ui/bot-icon';
-import LoaderIcon from '@/components/ui/loader-icon';
+import { Input } from "./ui/input";
+import BotIcon from './ui/bot-icon';
+import LoaderIcon from './ui/loader-icon';
 import styles from './ChatInterface.module.css';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
@@ -12,9 +12,10 @@ import { PostHog } from 'posthog-node'
 let client: PostHog | undefined;
 if (process.env.NEXT_PUBLIC_ENVIRONMENT === "production") {
   client = new PostHog(
-    `${process.env.NEXT_PUBLIC_POSTHOG_ID}`,    
-    { host: 'https://app.posthog.com',
-      disableGeoip: false, 
+    `${process.env.NEXT_PUBLIC_POSTHOG_ID}`,
+    {
+      host: 'https://app.posthog.com',
+      disableGeoip: false,
       requestTimeout: 30000
     }
   );
@@ -51,7 +52,7 @@ export function ChatInterface() {
     actionOutput?: string,
     actionInput?: string
   }[]>([]);
-  const [maxHeight, setMaxHeight] = useState('80vh'); // Default to 100% of the viewport height
+  const [maxHeight, setMaxHeight] = useState(`calc(100vh - 64px)`); // Default to 100% of the viewport height
   const [isBotTyping, setIsBotTyping] = useState(false);
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const thinkingProcessEndRef = useRef<null | HTMLDivElement>(null);
@@ -59,7 +60,7 @@ export function ChatInterface() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-  
+
   useEffect(() => {
     thinkingProcessEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [thinkingProcess]);
@@ -71,25 +72,25 @@ export function ChatInterface() {
       setBotHasResponded(false); // Reset the flag
     }
   }, [botHasResponded]);
-  
+
   useEffect(() => {
     // This function will be called on resize events
     const handleResize = () => {
-      setMaxHeight(`${window.innerHeight - 200}px`);
+      setMaxHeight(`${window.innerHeight - 64} px`);
     };
-  
+
     // Set the initial value when the component mounts
     handleResize();
-  
+
     // Add the event listener for future resize events
     window.addEventListener('resize', handleResize);
-  
+
     // Return a cleanup function to remove the event listener when the component unmounts
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-  
+
   useEffect(() => {
-    
+
     // Function to fetch the bot name
     const fetchBotName = async () => {
       if (process.env.NEXT_PUBLIC_ENVIRONMENT === "production" && client) {
@@ -107,11 +108,11 @@ export function ChatInterface() {
         const headers: Record<string, string> = {};
         if (process.env.NEXT_PUBLIC_ENVIRONMENT === "production") {
           console.log('Authorization Key:', process.env.NEXT_PUBLIC_AUTH_KEY); // Add this line
-          headers['Authorization'] = `Bearer ${process.env.NEXT_PUBLIC_AUTH_KEY}`;
+          headers['Authorization'] = `Bearer ${process.env.NEXT_PUBLIC_AUTH_KEY} `;
           response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/botname`, {
             headers: headers,
           });
-          
+
         } else {
           response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/botname`);
         }
@@ -150,7 +151,7 @@ export function ChatInterface() {
     console.log('NEXT_PUBLIC_ENVIRONMENT:', process.env.NEXT_PUBLIC_ENVIRONMENT);
     console.log('NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL);
   }, []);
-  
+
 
   const handleBotResponse = async (userMessage: string) => {
     if (process.env.NEXT_PUBLIC_ENVIRONMENT === "production" && client) {
@@ -179,19 +180,20 @@ export function ChatInterface() {
         console.log('Authorization Key:', process.env.NEXT_PUBLIC_AUTH_KEY); // Add this line
         headers['Authorization'] = `Bearer ${process.env.NEXT_PUBLIC_AUTH_KEY}`;
       }
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat`, {
+      console.log('requestData', requestData)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat?stream=false`, {
+        // mode: 'no-cors',
         method: 'POST',
         headers: headers,
         body: JSON.stringify(requestData),
       });
-  
+      console.log('response', response)
       if (!response.ok) {
         throw new Error(`Network response was not ok: ${response.statusText}`);
       }
-  
+
       if (stream) {
-        {/*Not implemented*/}
+        {/*Not implemented*/ }
       } else {
         const data = await response.json();
         console.log('Bot response:', data);
@@ -216,70 +218,70 @@ export function ChatInterface() {
       setIsBotTyping(false); // Stop showing the typing indicator
       setBotHasResponded(true);
     }
-  };  
+  };
   return (
-    <div key="1" className="flex flex-col " style={{ height: '89vh' }}>
+    <div key="1" className="flex flex-col " style={{ height: '10vh' }}>
       <header className="flex items-center justify-center h-16 bg-gray-900 text-white">
         <BotIcon className="animate-wave h-7 w-6 mr-2" />
         <h1 className="text-2xl font-bold">SalesGPT</h1>
       </header>
       <main className="flex flex-row justify-center items-start bg-gray-100 dark:bg-gray-900 p-4" >
-        <div className="flex flex-col w-1/2 h-full bg-white rounded-lg shadow-md p-4 mr-4 chat-messages" style={{maxHeight}}>
+        <div className="flex flex-col w-1/2 h-full bg-white rounded-lg shadow-md p-4 mr-4 chat-messages" style={{ maxHeight, minHeight: maxHeight }}>
           <div className="flex items-center mb-4">
             <BotIcon className="h-6 w-6 text-gray-500 mr-2" />
             <h2 className="text-lg font-semibold">Chat Interface With The Customer</h2>
           </div>
-          <div className={`flex-1 overflow-y-auto ${styles.hideScrollbar}`}>
-        {messages.map((message, index) => (
-  <div key={message.id} className="flex items-center p-2">
-    {message.sender === 'user' ? (
-      <>
-        <span role="img" aria-label="User" className="mr-2">👤</span>
-        <span className={`text-frame p-2 rounded-lg bg-blue-100 dark:bg-blue-900 text-blue-900`}>
-          {message.text}
-        </span>
-      </>
-    ) : (
-      
-      <div className="flex w-full justify-between">
-        <div className="flex items-center">
-          <img
-            alt="Bot"
-            className="rounded-full mr-2"
-            src="/maskot.png"
-            style={{ width: 24, height: 24, objectFit: "cover" }}
-          />
-          <span className={`text-frame p-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-900`}>
-          <ReactMarkdown rehypePlugins={[rehypeRaw]} components={{
-            a: ({node, ...props}) => <a {...props} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700" />
-          }}>
-            {message.text}
-          </ReactMarkdown>
-          </span>
-        </div>
-        {message.sender === 'bot' && (
-          <div className="flex items-center justify-end ml-2">
-            {/* Style the index similar to the thinking process and position it near the border */}
-            <div className="text-sm text-gray-500" style={{minWidth: '20px', textAlign: 'right'}}>
-              <strong>({messages.filter((m, i) => m.sender === 'bot' && i <= index).length})</strong>
-            </div>
-          </div>
-        )}
-      </div>
-    )}
-    <div ref={messagesEndRef} />
-  </div>
-))}
-  {isBotTyping && (
-    <div className="flex items-center justify-start">
-      <img alt="Bot" className="rounded-full mr-2" src="/maskot.png" style={{ width: 24, height: 24, objectFit: "cover" }} />
-      <div className={`${styles.typingBubble}`}>
-      <span className={`${styles.typingDot}`}></span>
-      <span className={`${styles.typingDot}`}></span>
-      <span className={`${styles.typingDot}`}></span>
-    </div>
-    </div>
-  )}
+          <div className={`flex-1 overflow-y-auto hide-scroll ${styles.hideScrollbar}`}>
+            {messages.map((message, index) => (
+              <div key={message.id} className="flex items-center p-2">
+                {message.sender === 'user' ? (
+                  <>
+                    <span role="img" aria-label="User" className="mr-2">👤</span>
+                    <span className={`text-frame p-2 rounded-lg bg-blue-100 dark:bg-blue-900 text-blue-900`}>
+                      {message.text}
+                    </span>
+                  </>
+                ) : (
+
+                  <div className="flex w-full justify-between">
+                    <div className="flex items-center">
+                      <img
+                        alt="Bot"
+                        className="rounded-full mr-2"
+                        src="/maskot.png"
+                        style={{ width: 24, height: 24, objectFit: "cover" }}
+                      />
+                      <span className={`text-frame p-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-900`}>
+                        <ReactMarkdown rehypePlugins={[rehypeRaw]} components={{
+                          a: ({ node, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700" />
+                        }}>
+                          {message.text}
+                        </ReactMarkdown>
+                      </span>
+                    </div>
+                    {message.sender === 'bot' && (
+                      <div className="flex items-center justify-end ml-2">
+                        {/* Style the index similar to the thinking process and position it near the border */}
+                        <div className="text-sm text-gray-500" style={{ minWidth: '20px', textAlign: 'right' }}>
+                          <strong>({messages.filter((m, i) => m.sender === 'bot' && i <= index).length})</strong>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+            ))}
+            {isBotTyping && (
+              <div className="flex items-center justify-start">
+                <img alt="Bot" className="rounded-full mr-2" src="/maskot.png" style={{ width: 24, height: 24, objectFit: "cover" }} />
+                <div className={`${styles.typingBubble}`}>
+                  <span className={`${styles.typingDot}`}></span>
+                  <span className={`${styles.typingDot}`}></span>
+                  <span className={`${styles.typingDot}`}></span>
+                </div>
+              </div>
+            )}
           </div>
           <div className="mt-4">
             <Input
@@ -295,12 +297,12 @@ export function ChatInterface() {
             />
           </div>
         </div>
-        <div className="flex flex-col w-1/2 h-full bg-white rounded-lg shadow-md p-4 thinking-process" style={{maxHeight}}>
-  <div className="flex items-center mb-4">
-    <BotIcon className="h-6 w-6 text-gray-500 mr-2" />
-    <h2 className="text-lg font-semibold">AI Sales Agent {botName} Thought Process</h2>
-  </div>
-  <div className={`flex-1 overflow-y-auto hide-scroll ${styles.hideScrollbar}`} style={{ overflowX: 'hidden' }}>
+        <div className="flex flex-col w-1/2 h-full bg-white rounded-lg shadow-md p-4 thinking-process" style={{ maxHeight, minHeight: maxHeight }}>
+          <div className="flex items-center mb-4">
+            <BotIcon className="h-6 w-6 text-gray-500 mr-2" />
+            <h2 className="text-lg font-semibold">AI Sales Agent {botName} Thought Process</h2>
+          </div>
+          <div className={`flex-1 overflow-y-auto hide-scroll ${styles.hideScrollbar}`} style={{ overflowX: 'hidden' }}>
             <div>
               {thinkingProcess.map((process, index) => (
                 <div key={index} className="break-words my-2">
@@ -322,8 +324,8 @@ export function ChatInterface() {
               ))}
             </div>
             <div ref={thinkingProcessEndRef} />
-</div></div>
-      </main>
-    </div>
+          </div></div>
+      </main >
+    </div >
   );
 }
