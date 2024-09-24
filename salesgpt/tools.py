@@ -262,7 +262,7 @@ def get_tools(product_catalog):
         Tool(
             name="ProductSearch",
             func=knowledge_base.run,
-            description="useful for when you need to answer questions about product information or services offered, availability and their costs.",
+            description="当您需要回答有关产品信息或所提供服务、功能及其价格的问题时，该工具非常有用。",  # description = "useful for when you need to answer questions about product information or services offered, availability and their costs.",
         ),
         # Tool(
         #     name="GeneratePaymentLink",
