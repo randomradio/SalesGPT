@@ -58,6 +58,7 @@ export function ChatInterface() {
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const thinkingProcessEndRef = useRef<null | HTMLDivElement>(null);
   const [botHasResponded, setBotHasResponded] = useState(false);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -165,66 +166,116 @@ export function ChatInterface() {
       });
     }
 
+    setIsBotTyping(true);
+
+    try {
+      const response = await fetchBotResponse(userMessage);
+      await processBotResponse(response);
+    } catch (error) {
+      console.error("获取机器人响应失败:", error);
+    } finally {
+      setBotMessageIndex(botMessageIndex + 1);
+      setIsBotTyping(false);
+      setBotHasResponded(true);
+    }
+  };
+
+  const fetchBotResponse = async (userMessage: string) => {
     const requestData = {
       session_id,
       human_say: userMessage,
       stream,
+      conversation_history: messages.map(message => message.text)
     };
-    setIsBotTyping(true); // Start showing the typing indicator
 
-    try {
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json'
-      };
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json'
+    };
 
-      if (process.env.NEXT_PUBLIC_ENVIRONMENT === "production") {
-        console.log('Authorization Key:', process.env.NEXT_PUBLIC_AUTH_KEY); // Add this line
-        headers['Authorization'] = `Bearer ${process.env.NEXT_PUBLIC_AUTH_KEY}`;
-      }
-      console.log('requestData', requestData)
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat?stream=false`, {
-        // mode: 'no-cors',
-        method: 'POST',
-        headers: headers,
-        body: JSON.stringify(requestData),
-      });
-      console.log('response', response)
-      if (!response.ok) {
-        throw new Error(`Network response was not ok: ${response.statusText}`);
-      }
+    if (process.env.NEXT_PUBLIC_ENVIRONMENT === "production") {
+      headers['Authorization'] = `Bearer ${process.env.NEXT_PUBLIC_AUTH_KEY}`;
+    }
 
-      if (stream) {
-        {/*Not implemented*/ }
-      } else {
-        const data = await response.json();
-        console.log('Bot response:', data);
-        setBotName(data.bot_name); // Update bot name based on response
-        setConversationalStage(data.conversational_stage);
-        // Update the thinkingProcess state with new fields from the response
-        setThinkingProcess(prevProcess => [...prevProcess, {
-          conversationalStage: data.conversational_stage,
-          tool: data.tool,
-          toolInput: data.tool_input,
-          actionOutput: data.action_output,
-          actionInput: data.action_input
-        }]);
-        const botMessageText = `${data.response}`;
-        const botMessage: Message = { id: uuidv4(), text: botMessageText, sender: 'bot' };
-        setBotMessageIndex(botMessageIndex + 1);
-        setMessages((prevMessages) => [...prevMessages, botMessage]);
-      }
-    } catch (error) {
-      console.error("Failed to fetch bot's response:", error);
-    } finally {
-      setIsBotTyping(false); // Stop showing the typing indicator
-      setBotHasResponded(true);
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat?stream=${stream}`, {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify(requestData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`网络响应不正常: ${response.statusText}`);
+    }
+
+    return response;
+  };
+
+  const processBotResponse = async (response: Response) => {
+    if (stream) {
+      await handleStreamResponse(response);
+    } else {
+      await handleNonStreamResponse(response);
     }
   };
+
+  const handleStreamResponse = async (response: Response) => {
+    const reader = response.body?.getReader();
+    const decoder = new TextDecoder("utf-8");
+    let partialResponse = '';
+    let botMessage: Message = { id: uuidv4(), text: '', sender: 'bot' };
+
+    setMessages(prevMessages => [...prevMessages, botMessage]);
+
+    while (true) {
+      const { done, value } = await reader?.read() || {};
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      partialResponse += chunk;
+
+      setMessages(prevMessages => {
+        const updatedMessages = [...prevMessages];
+        updatedMessages[updatedMessages.length - 1] = {
+          ...updatedMessages[updatedMessages.length - 1],
+          text: partialResponse
+        };
+        return updatedMessages;
+      });
+
+      try {
+        const data = JSON.parse(partialResponse);
+        updateBotInfo(data);
+      } catch (e) {
+        // 如果不是有效的JSON，继续等待更多数据
+      }
+    }
+  };
+
+  const handleNonStreamResponse = async (response: Response) => {
+    const data = await response.json();
+    updateBotInfo(data);
+    const botMessageText = `${data.response}`;
+    const botMessage: Message = { id: uuidv4(), text: botMessageText, sender: 'bot' };
+
+    setMessages((prevMessages) => [...prevMessages, botMessage]);
+  };
+
+  const updateBotInfo = (data: any) => {
+    setBotName(data.bot_name);
+    setConversationalStage(data.conversational_stage);
+    setThinkingProcess(prevProcess => [...prevProcess, {
+      conversationalStage: data.conversational_stage,
+      tool: data.tool,
+      toolInput: data.tool_input,
+      actionOutput: data.action_output,
+      actionInput: data.action_input
+    }]);
+  };
+
   return (
     <div key="1" className="flex flex-col " style={{ height: '100vh' }}>
       <Header />
-      <main className="flex flex-row justify-center items-start bg-[#F5F5F5] p-4 flex-grow overflow-hidden text-[14px]" >
-        <div className="flex flex-col w-1/2 h-full bg-white rounded-lg shadow-md mr-4 chat-messages">
+      <main className="flex flex-row justify-center items-start bg-[#F5F5F5] p-6 flex-grow overflow-hidden text-[14px]" >
+        <div className="flex flex-col w-1/2 h-full bg-white rounded-lg shadow-[0px_0px_0px_1px_#FFFFFF] mr-4 chat-messages">
           <Title title="产品销售" />
           <div className={`flex-1 overflow-y-auto hide-scroll px-6 ${styles.hideScrollbar}`}>
             {messages.map((message, index) => (
@@ -306,7 +357,7 @@ export function ChatInterface() {
             />
           </div>
         </div>
-        <div className="flex flex-col w-1/2 h-full bg-white rounded-lg shadow-md thinking-process">
+        <div className="flex flex-col w-1/2 h-full bg-white rounded-lg shadow-[0px_0px_0px_1px_#FFFFFF] thinking-process">
           <Title title="营销流程助手" />
           <div className={`flex-1 overflow-y-auto hide-scroll px-4 ${styles.hideScrollbar}`} style={{ overflowX: 'hidden' }}>
             <div>
