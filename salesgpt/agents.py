@@ -8,11 +8,6 @@ from langchain.agents import (
 )
 from langchain.chains import LLMChain, RetrievalQA
 from langchain.chains.base import Chain
-from langchain_community.chat_models import ChatLiteLLM
-from langchain_core.agents import (
-    _convert_agent_action_to_messages,
-    _convert_agent_observation_to_messages,
-)
 from langchain_core.language_models.llms import create_base_retry_decorator
 from litellm import acompletion
 from pydantic import Field
@@ -65,7 +60,7 @@ class SalesGPT(Chain):
     sales_conversation_utterance_chain: SalesConversationChain = Field(...)
     conversation_stage_dict: Dict = CONVERSATION_STAGES
 
-    model_name: str = "gpt-3.5-turbo-0613"  # TODO - make this an env variable
+    model_name: str = ""  # TODO - make this an env variable
 
     use_tools: bool = False
     salesperson_name: str = "Ted Lasso"
@@ -351,7 +346,7 @@ class SalesGPT(Chain):
         prompt = self.sales_conversation_utterance_chain.prep_prompts(
             [
                 dict(
-                    conversation_stage=self.current_conversation_stage,
+                    conversation_stages=[self.current_conversation_stage],
                     conversation_history="\n".join(self.conversation_history),
                     salesperson_name=self.salesperson_name,
                     salesperson_role=self.salesperson_role,
@@ -539,7 +534,7 @@ class SalesGPT(Chain):
 
     @classmethod
     @time_logger
-    def from_llm(cls, llm: ChatLiteLLM, verbose: bool = False, **kwargs) -> "SalesGPT":
+    def from_llm(cls, llm, verbose: bool = False, **kwargs) -> "SalesGPT":
         """
         Class method to initialize the SalesGPT Controller from a given ChatLiteLLM instance.
 

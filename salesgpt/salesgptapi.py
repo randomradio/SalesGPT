@@ -1,9 +1,7 @@
-import asyncio
 import json
 import re
 
-from langchain_community.chat_models import BedrockChat, ChatLiteLLM
-from langchain_openai import ChatOpenAI, AzureChatOpenAI
+from langchain_openai import AzureChatOpenAI
 
 from salesgpt.agents import SalesGPT
 from salesgpt.models import BedrockCustomModel
@@ -64,7 +62,8 @@ class SalesGPTAPI:
                 }
             )
 
-        sales_agent = SalesGPT.from_llm(self.llm, **config)
+        # TODO - make this an env variable, either config or variable didn't work
+        sales_agent = SalesGPT.from_llm(self.llm, model_name=self.model_name, **config)
 
         print(f"SalesGPT use_tools: {sales_agent.use_tools}")
         sales_agent.seed_agent()
@@ -157,36 +156,30 @@ class SalesGPTAPI:
         }
         return payload
 
-    async def do_stream(self, conversation_history: [str], human_input=None):
-        # TODO
-        current_turns = len(conversation_history) + 1
-        if current_turns >= self.max_num_turns:
-            print("Maximum number of turns reached - ending the conversation.")
-            yield [
-                "BOT",
-                "In case you'll have any questions - just text me one more time!",
-            ]
-            raise StopAsyncIteration
-
-        self.sales_agent.seed_agent()
-        self.sales_agent.conversation_history = conversation_history
+    async def do_stream(self, human_input=None):
+        self.current_turn += 1
+        if self.current_turn >= self.max_num_turns:
+            yield json.dumps(
+                {"token": "Maximum number of turns reached - ending the conversation."}
+            )
+            return
 
         if human_input is not None:
             self.sales_agent.human_step(human_input)
 
-        stream_gen = self.sales_agent.astep(stream=True)
-        for model_response in stream_gen:
+        stream_gen = await self.sales_agent.astep(stream=True)
+        async for model_response in stream_gen:
             for choice in model_response.choices:
-                message = choice["delta"]["content"]
-                if message is not None:
-                    if "<END_OF_CALL>" in message:
-                        print(
-                            "Sales Agent determined it is time to end the conversation."
-                        )
-                        yield [
-                            "BOT",
-                            "In case you'll have any questions - just text me one more time!",
-                        ]
-                    yield message
-                else:
-                    continue
+                if "delta" in choice and "content" in choice["delta"]:
+                    message = choice["delta"]["content"]
+                    if message:
+                        if "<END_OF_CALL>" in message:
+                            message = message.replace("<END_OF_CALL>", "")
+                            yield json.dumps({"token": message, "end_of_call": True})
+                        else:
+                            yield json.dumps({"token": message})
+
+        await self.sales_agent.adetermine_conversation_stage()
+        yield json.dumps(
+            {"conversation_stage": self.sales_agent.current_conversation_stage}
+        )
