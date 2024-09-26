@@ -1,10 +1,11 @@
 import React from 'react';
 import BotIcon from './bot-icon'; // Adjust the import path as necessary
+import Image from 'next/image';
 
 const Header = () => (
-  <header className="flex items-center justify-center h-16 bg-gray-900 text-white">
-    <BotIcon className="animate-wave h-7 w-6 mr-2" />
-    <h1 className="text-2xl font-bold">SalesGPT</h1>
+  <header className="flex items-center justify-center h-[80px] text-white" style={{ background: 'linear-gradient(90deg, #004FFF 0%, #16D7F6 100%)' }}>
+    <Image src='/logo.png' alt="logo" width={32} height={32} className="mr-2" />
+    <h1 className="text-2xl font-semibold text-[#F5F5F5]">营销流程助手</h1>
   </header>
 );
 

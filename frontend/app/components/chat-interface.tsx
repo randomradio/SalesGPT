@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid'; // For generating unique session_id
-import { Input } from "./ui/input";
+import { Input } from "./ui/Input";
 import BotIcon from './ui/bot-icon';
 import LoaderIcon from './ui/loader-icon';
 import styles from './ChatInterface.module.css';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
+import Image from 'next/image';
+import Header from './ui/Header';
+import Title from './ui/Title';
 
 import { PostHog } from 'posthog-node'
 
@@ -220,38 +223,40 @@ export function ChatInterface() {
     }
   };
   return (
-    <div key="1" className="flex flex-col " style={{ height: '10vh' }}>
-      <header className="flex items-center justify-center h-16 bg-gray-900 text-white">
-        <BotIcon className="animate-wave h-7 w-6 mr-2" />
-        <h1 className="text-2xl font-bold">SalesGPT</h1>
-      </header>
-      <main className="flex flex-row justify-center items-start bg-gray-100 dark:bg-gray-900 p-4" >
-        <div className="flex flex-col w-1/2 h-full bg-white rounded-lg shadow-md p-4 mr-4 chat-messages" style={{ maxHeight, minHeight: maxHeight }}>
-          <div className="flex items-center mb-4">
-            <BotIcon className="h-6 w-6 text-gray-500 mr-2" />
-            <h2 className="text-lg font-semibold">Chat Interface With The Customer</h2>
-          </div>
-          <div className={`flex-1 overflow-y-auto hide-scroll ${styles.hideScrollbar}`}>
+    <div key="1" className="flex flex-col " style={{ height: '100vh' }}>
+      <Header />
+      <main className="flex flex-row justify-center items-start bg-[#F5F5F5] p-4 flex-grow overflow-hidden text-[14px]" >
+        <div className="flex flex-col w-1/2 h-full bg-white rounded-lg shadow-md mr-4 chat-messages">
+          <Title title="产品销售" />
+          <div className={`flex-1 overflow-y-auto hide-scroll px-6 ${styles.hideScrollbar}`}>
             {messages.map((message, index) => (
-              <div key={message.id} className="flex items-center p-2">
+              <div key={message.id} className="flex items-centerm mt-4 text-[#000000]">
                 {message.sender === 'user' ? (
                   <>
-                    <span role="img" aria-label="User" className="mr-2">👤</span>
-                    <span className={`text-frame p-2 rounded-lg bg-blue-100 dark:bg-blue-900 text-blue-900`}>
+                    <Image
+                      alt="User"
+                      className="rounded-full mr-2"
+                      src="/user.png"
+                      width={40}
+                      height={40}
+                      objectFit='cover'
+                    />
+                    <span className='text-frame px-3 py-2 rounded-lg bg-[#E8F3FF]'>
                       {message.text}
                     </span>
                   </>
                 ) : (
-
                   <div className="flex w-full justify-between">
                     <div className="flex items-center">
-                      <img
+                      <Image
                         alt="Bot"
                         className="rounded-full mr-2"
                         src="/maskot.png"
-                        style={{ width: 24, height: 24, objectFit: "cover" }}
+                        width={40}
+                        height={40}
+                        objectFit='cover'
                       />
-                      <span className={`text-frame p-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-900`}>
+                      <span className={`text-frame p-2 rounded-lg bg-[#F5F5F5]`}>
                         <ReactMarkdown rehypePlugins={[rehypeRaw]} components={{
                           a: ({ node, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700" />
                         }}>
@@ -261,7 +266,6 @@ export function ChatInterface() {
                     </div>
                     {message.sender === 'bot' && (
                       <div className="flex items-center justify-end ml-2">
-                        {/* Style the index similar to the thinking process and position it near the border */}
                         <div className="text-sm text-gray-500" style={{ minWidth: '20px', textAlign: 'right' }}>
                           <strong>({messages.filter((m, i) => m.sender === 'bot' && i <= index).length})</strong>
                         </div>
@@ -273,8 +277,15 @@ export function ChatInterface() {
               </div>
             ))}
             {isBotTyping && (
-              <div className="flex items-center justify-start">
-                <img alt="Bot" className="rounded-full mr-2" src="/maskot.png" style={{ width: 24, height: 24, objectFit: "cover" }} />
+              <div className="flex items-center justify-start mt-4">
+                <Image
+                  alt="Bot"
+                  className="rounded-full mr-2"
+                  src="/maskot.png"
+                  width={40}
+                  height={40}
+                  objectFit='cover'
+                />
                 <div className={`${styles.typingBubble}`}>
                   <span className={`${styles.typingDot}`}></span>
                   <span className={`${styles.typingDot}`}></span>
@@ -283,10 +294,10 @@ export function ChatInterface() {
               </div>
             )}
           </div>
-          <div className="mt-4">
+          <div className="p-4">
             <Input
               className="w-full"
-              placeholder="Type your message..."
+              placeholder="你想了解什么？"
               value={inputValue}
               onChange={handleInputChange}
               onKeyDown={(e) => {
@@ -297,17 +308,14 @@ export function ChatInterface() {
             />
           </div>
         </div>
-        <div className="flex flex-col w-1/2 h-full bg-white rounded-lg shadow-md p-4 thinking-process" style={{ maxHeight, minHeight: maxHeight }}>
-          <div className="flex items-center mb-4">
-            <BotIcon className="h-6 w-6 text-gray-500 mr-2" />
-            <h2 className="text-lg font-semibold">AI Sales Agent {botName} Thought Process</h2>
-          </div>
-          <div className={`flex-1 overflow-y-auto hide-scroll ${styles.hideScrollbar}`} style={{ overflowX: 'hidden' }}>
+        <div className="flex flex-col w-1/2 h-full bg-white rounded-lg shadow-md thinking-process">
+          <Title title="营销流程助手" />
+          <div className={`flex-1 overflow-y-auto hide-scroll px-4 ${styles.hideScrollbar}`} style={{ overflowX: 'hidden' }}>
             <div>
               {thinkingProcess.map((process, index) => (
                 <div key={index} className="break-words my-2">
                   <div><strong>({index + 1})</strong></div>
-                  <div><strong>Conversational Stage:</strong> {process.conversationalStage}</div>
+                  <div><strong>销售阶段:</strong> {process.conversationalStage}</div>
                   {process.tool && (
                     <div><strong>Tool:</strong> {process.tool}</div>
                   )}

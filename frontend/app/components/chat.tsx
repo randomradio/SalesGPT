@@ -1,5 +1,4 @@
 import { ChatInterface } from './chat-interface';
-import { GitHubFooter } from './git-hub-footer';
 
 export default function ChatPage() {
     return (
@@ -9,8 +8,6 @@ export default function ChatPage() {
             <div style={{ flexGrow: 1 }}>
                 <ChatInterface />
             </div>
-            {/* Footer will automatically be pushed to the bottom */}
-            {/* <GitHubFooter /> */}
         </div>
     );
 }
