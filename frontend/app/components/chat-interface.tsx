@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid'; // For generating unique session_id
 import { Input } from "./ui/Input";
-import BotIcon from './ui/bot-icon';
-import LoaderIcon from './ui/loader-icon';
 import styles from './ChatInterface.module.css';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';

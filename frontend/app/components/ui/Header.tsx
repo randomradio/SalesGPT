@@ -1,5 +1,4 @@
 import React from 'react';
-import BotIcon from './bot-icon'; // Adjust the import path as necessary
 import Image from 'next/image';
 
 const Header = () => (
