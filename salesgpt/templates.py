@@ -23,9 +23,11 @@ class CustomPromptTemplateForTools(StringPromptTemplate):
         ############## NEW ######################
         tools = self.tools_getter(kwargs["input"])
         # Create a tools variable from the list of tools provided
-        kwargs["tools"] = "\n".join(
-            [f"{tool.name}: {tool.description}" for tool in tools]
-        )
+        kwargs["tools"] = "\n".join([tool for tool in tools])
+        # kwargs["tools"] = "\n".join(
+        #     [f"{tool.name}: {tool.description}" for tool in tools]
+        # )
         # Create a list of tool names for the tools provided
-        kwargs["tool_names"] = ", ".join([tool.name for tool in tools])
+        # kwargs["tool_names"] = ", ".join([tool.name for tool in tools])
+        kwargs["tool_names"] = ", ".join([tool for tool in tools])
         return self.template.format(**kwargs)

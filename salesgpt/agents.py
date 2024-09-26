@@ -597,9 +597,10 @@ class SalesGPT(Chain):
             product_catalog = kwargs.pop("product_catalog", None)
             tools = get_tools(product_catalog)
 
+            tool_names = [tool.name for tool in tools]
             prompt = CustomPromptTemplateForTools(
                 template=SALES_AGENT_TOOLS_PROMPT,
-                tools_getter=lambda x: tools,
+                tools_getter=lambda x: tool_names,
                 input_variables=[
                     "input",
                     "intermediate_steps",
@@ -614,7 +615,6 @@ class SalesGPT(Chain):
                 ],
             )
             llm_chain = LLMChain(llm=llm, prompt=prompt, verbose=verbose)
-            tool_names = [tool.name for tool in tools]
             output_parser = SalesConvoOutputParser(
                 ai_prefix=kwargs.get("salesperson_name", ""), verbose=verbose
             )
