@@ -25,3 +25,53 @@ body {
     text-wrap: balance;
   }
 }
+
+.ant-pro-chat-list-item-right,
+.ant-pro-chat-message-content {
+  flex-direction: row !important;
+}
+
+.ant-pro-chat-list-item-left .ant-pro-chat-list-item-message-content {
+  background-color: #f5f5f5 !important;
+}
+
+.ant-pro-chat-list-item-right .ant-pro-chat-list-item-message-content {
+  background-color: #E8F3FF !important;
+}
+
+.ant-pro-chat-list-item-message-container,
+.ant-pro-chat-message-content {
+  width: 100%;
+}
+
+.ant-pro-chat-input-area {
+  background-image: none !important;
+}
+
+.ant-pro-chat-input-area-action-bar {
+  display: none !important;
+}
+
+.ant-pro-chat-list {
+  margin-top: 0px !important;
+}
+
+.ant-pro-chat-list-item-title {
+  left: 0px !important;
+  right: unset !important;
+}
+
+.ant-editor-snippet-container {
+  display: none !important;
+}
+
+.hide-scrollbar::-webkit-scrollbar,
+.hide-scrollbar *::-webkit-scrollbar {
+  display: none !important;
+}
+
+.hide-scrollbar,
+.hide-scrollbar * {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}

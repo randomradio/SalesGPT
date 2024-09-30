@@ -9,7 +9,13 @@ const nextConfig = {
       aggregateTimeout: 300
     }
     return config
-  }
+  },
+  transpilePackages: [
+    // 根据实际情况按需添加
+    'shiki',
+    '@ant-design/pro-chat',
+    '@ant-design/pro-editor',
+  ]
 }
 
 export default nextConfig;
